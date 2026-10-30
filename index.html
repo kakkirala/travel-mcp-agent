@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travel Planner</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #eef3f8; color: #1a1a1a; }
+  .topbar { background: #0b2545; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .brand { font-size: 22px; font-weight: 700; }
+  .topnote { font-size: 14px; opacity: 0.85; }
+  .hero { position: relative; min-height: 420px; background: linear-gradient(120deg, #0b2545, #0066ff); overflow: hidden; }
+  .hero img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .hero-shade { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,0.25), rgba(0,0,0,0.55)); }
+  .hero-inner { position: relative; max-width: 900px; margin: 0 auto; padding: 44px 20px 26px; color: #fff; }
+  .hero-inner h1 { margin: 0 0 8px; font-size: 34px; text-shadow: 0 2px 8px rgba(0,0,0,0.5); }
+  .hero-inner p { margin: 0; font-size: 16px; opacity: 0.95; text-shadow: 0 1px 6px rgba(0,0,0,0.5); }
+  .search-card { position: relative; max-width: 900px; margin: -4px auto 0; background: #fff; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.25); padding: 18px; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab { border: 1px solid #cfe0f5; background: #f2f7ff; color: #0b4fa6; border-radius: 20px; padding: 8px 18px; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .tab.active { background: #008cff; color: #fff; border-color: #008cff; }
+  .formrow { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .field label { display: block; font-size: 13px; color: #555; margin-bottom: 4px; }
+  .field select, .field input { width: 100%; font-size: 15px; padding: 10px; border: 1px solid #ccc; border-radius: 10px; background: #fff; }
+  .multi-row { display: none; margin-bottom: 12px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .chips button { border: 1px solid #cfe0f5; background: #f2f7ff; color: #0b4fa6; border-radius: 20px; padding: 7px 14px; font-size: 14px; cursor: pointer; }
+  .chips button:hover { background: #dbeaff; }
+  textarea { width: 100%; font-size: 16px; padding: 12px; border: 1px solid #ccc; border-radius: 10px; resize: vertical; }
+  .plan-btn { margin-top: 12px; background: #008cff; color: #fff; border: none; border-radius: 10px; padding: 13px 28px; font-size: 17px; font-weight: 700; cursor: pointer; }
+  .plan-btn:hover { background: #0070cc; }
+  .plan-btn:disabled { background: #9cc7ee; cursor: wait; }
+  .small-note { font-size: 13px; color: #777; margin-top: 8px; }
+  .section { max-width: 900px; margin: 0 auto; padding: 22px 20px 8px; }
+  .section h2 { margin: 0 0 4px; color: #0b2545; }
+  .section p.sub { margin: 0 0 14px; color: #555; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  .dest { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.10); cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+  .dest:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.16); }
+  .dest img { width: 100%; height: 130px; object-fit: cover; display: block; background: #dde6f0; }
+  .dest-body { padding: 10px 12px 12px; }
+  .dest-body b { color: #0b2545; font-size: 16px; }
+  .dest-body span { color: #666; font-size: 13px; }
+  .answer-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.10); padding: 18px; margin-top: 6px; }
+  .answer-card h3 { color: #0b2545; margin: 16px 0 6px; }
+  .answer-card h4 { color: #0b2545; margin: 14px 0 6px; }
+  .answer-card p { margin: 6px 0; line-height: 1.6; font-size: 15px; }
+  .answer-card ul { margin: 6px 0; padding-left: 20px; }
+  .answer-card li { margin: 3px 0; font-size: 15px; line-height: 1.6; }
+  .answer-card table { border-collapse: collapse; margin: 10px 0; width: 100%; }
+  .answer-card th, .answer-card td { border: 1px solid #ddd; padding: 8px 10px; text-align: left; font-size: 14px; }
+  .answer-card th { background: #f2f7ff; color: #0b2545; }
+  .answer-card hr { border: none; border-top: 1px solid #ddd; margin: 14px 0; }
+  .fc-head { margin: 18px 0 4px; color: #0b2545; font-size: 18px; }
+  .fc-head span { color: #555; font-size: 14px; font-weight: 400; }
+  .fc-note { color: #777; font-size: 13px; margin-bottom: 10px; }
+  .sort-btns { display: flex; gap: 8px; margin-bottom: 10px; }
+  .sort-btn { border: 1px solid #cfe0f5; background: #f2f7ff; color: #0b4fa6; border-radius: 20px; padding: 6px 14px; font-size: 13px; cursor: pointer; }
+  .sort-btn.active { background: #008cff; color: #fff; border-color: #008cff; }
+  .flight-card { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.10); padding: 14px 16px; margin-bottom: 10px; }
+  .fc-air { display: flex; gap: 12px; align-items: center; }
+  .fc-logo { width: 46px; height: 46px; min-width: 46px; border-radius: 10px; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; }
+  .fc-air b { color: #0b2545; }
+  .fc-air span { color: #777; font-size: 13px; }
+  .fc-route { text-align: center; }
+  .fc-route b { color: #0b2545; font-size: 16px; }
+  .fc-route span { color: #555; font-size: 13px; }
+  .fc-price { text-align: right; }
+  .fc-price b { color: #0b2545; font-size: 20px; }
+  .fc-price span { color: #777; font-size: 13px; }
+  .book-btn { background: #008cff; color: #fff; border: none; border-radius: 10px; padding: 11px 22px; font-size: 15px; font-weight: 700; cursor: pointer; }
+  .book-btn:hover { background: #0070cc; }
+  .book-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.10); padding: 18px; margin-top: 6px; }
+  .book-card h3 { margin: 0 0 12px; color: #0b2545; }
+  .book-card h4 { margin: 18px 0 6px; color: #0b2545; }
+  .trav { margin-bottom: 12px; }
+  .trav input, .trav select { font-size: 15px; padding: 9px; border: 1px solid #ccc; border-radius: 8px; margin-right: 8px; margin-top: 6px; }
+  .fare-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; font-size: 15px; }
+  .fare-total { display: flex; justify-content: space-between; padding: 10px 0 4px; font-size: 17px; font-weight: 700; color: #0b2545; }
+  .warn { color: #b00020; font-size: 14px; margin-top: 10px; }
+  .done-box { background: #e6f4ea; border: 1px solid #a3d9a5; border-radius: 10px; padding: 14px; margin-top: 14px; }
+  .done-box b { color: #137333; }
+  .back-btn { background: #fff; color: #0b4fa6; border: 1px solid #cfe0f5; border-radius: 10px; padding: 11px 20px; font-size: 15px; font-weight: 600; cursor: pointer; margin-left: 8px; }
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-top: 14px; }
+  .feat { background: #fff; border-radius: 12px; padding: 14px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); font-size: 14px; color: #333; }
+  .feat b { color: #0b2545; }
+  .foot { text-align: center; color: #777; font-size: 13px; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="brand">✈️ Travel Planner</div>
+  <div class="topnote">AI trip planner</div>
+</div>
+
+<div class="hero">
+  <img src="https://resorglobal.se/wp-content/uploads/2025/11/RG-Tokyo-4-1024x576.jpg" alt="Tokyo" onerror="this.style.display='none'">
+  <div class="hero-shade"></div>
+  <div class="hero-inner">
+    <h1>Where do you want to go?</h1>
+    <p>Ask in plain words. The AI agent plans the trip, finds the cheapest flight and hotel, and checks the budget.</p>
+  </div>
+  <div class="search-card">
+    <div class="tabs">
+      <button class="tab active" id="tab-oneway" onclick="setTripType('oneway')">One Way</button>
+      <button class="tab" id="tab-round" onclick="setTripType('round')">Round Trip</button>
+      <button class="tab" id="tab-multi" onclick="setTripType('multi')">Multi City</button>
+    </div>
+    <div class="formrow">
+      <div class="field">
+        <label>From</label>
+        <select id="fromCity" onchange="buildQuestion()">
+          <option>New York (JFK)</option>
+          <option>Los Angeles (LAX)</option>
+          <option>San Francisco (SFO)</option>
+          <option>Chicago (ORD)</option>
+          <option>London (LHR)</option>
+          <option>Dubai (DXB)</option>
+          <option>Singapore (SIN)</option>
+          <option>Hyderabad (HYD)</option>
+          <option>Delhi (DEL)</option>
+          <option>Sydney (SYD)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>To</label>
+        <select id="toCity" onchange="buildQuestion()">
+          <option value="Tokyo">Tokyo, Japan</option>
+          <option value="Kyoto">Kyoto, Japan</option>
+          <option value="Kuala Lumpur">Kuala Lumpur, Malaysia</option>
+          <option value="Kochi">Kochi, India</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Days</label>
+        <input type="number" id="days" min="1" max="30" value="3" onchange="buildQuestion()">
+      </div>
+      <div class="field">
+        <label>Travellers</label>
+        <input type="number" id="people" min="1" max="10" value="2" onchange="buildQuestion()">
+      </div>
+    </div>
+    <div class="formrow">
+      <div class="field">
+        <label>Departure date</label>
+        <input type="date" id="depDate" onchange="buildQuestion()">
+      </div>
+      <div class="field" id="retDateWrap" style="display:none;">
+        <label>Return date</label>
+        <input type="date" id="retDate" onchange="buildQuestion()">
+      </div>
+    </div>
+    <div class="multi-row" id="multiRow">
+      <div class="field">
+        <label>Then go to</label>
+        <select id="toCity2" onchange="buildQuestion()">
+          <option value="Tokyo">Tokyo, Japan</option>
+          <option value="Kyoto" selected>Kyoto, Japan</option>
+          <option value="Kuala Lumpur">Kuala Lumpur, Malaysia</option>
+          <option value="Kochi">Kochi, India</option>
+        </select>
+      </div>
+    </div>
+    <div class="chips">
+      <button onclick="pickSample('trip')">Plan a trip</button>
+      <button onclick="pickSample('flight')">Cheapest flight</button>
+      <button onclick="pickSample('hotel')">Cheapest hotel</button>
+      <button onclick="pickSample('budget')">Budget</button>
+    </div>
+    <textarea id="question" rows="3" placeholder="Your trip question appears here — you can edit it"></textarea>
+    <button class="plan-btn" id="planBtn" onclick="askPlanner()">Plan my trip</button>
+    <div class="small-note">Sample fares are from New York (JFK) for now.</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Popular destinations</h2>
+  <p class="sub">Tap a photo — it sets the destination and builds your question.</p>
+  <div class="grid">
+    <div class="dest" onclick="pickCity('Tokyo')">
+      <img src="https://cdn.signavio.com/uploads/2024/02/city-tokyo-1200x675.png" alt="Tokyo" onerror="this.style.display='none'">
+      <div class="dest-body"><b>Tokyo</b><br><span>Japan · City views, food markets, shopping</span></div>
+    </div>
+    <div class="dest" onclick="pickCity('Kyoto')">
+      <img src="https://images.pickyourtrail.com/images/campaignitinerary/japan_kyoto_see.jpeg" alt="Kyoto" onerror="this.style.display='none'">
+      <div class="dest-body"><b>Kyoto</b><br><span>Japan · Culture, gardens, local food</span></div>
+    </div>
+    <div class="dest" onclick="pickCity('Kuala Lumpur')">
+      <img src="https://www.traveloffpath.com/wp-content/uploads/2021/11/Petronas-Towers-Kuala-Lumpur-720x720.jpg" alt="Kuala Lumpur" onerror="this.style.display='none'">
+      <div class="dest-body"><b>Kuala Lumpur</b><br><span>Malaysia · Food, city views, shopping</span></div>
+    </div>
+    <div class="dest" onclick="pickCity('Kochi')">
+      <img src="https://marketmillion.com/wp-content/uploads/2023/08/kochi-585x390.jpg" alt="Kochi" onerror="this.style.display='none'">
+      <div class="dest-body"><b>Kochi</b><br><span>India · Food, backwaters, slow travel</span></div>
+    </div>
+  </div>
+
+  <div id="flightResults"></div>
+  <div id="hotelResults"></div>
+  <div id="bookingSection" style="display:none;">
+    <div class="book-card">
+      <h3>Review your booking</h3>
+      <div id="bookFlightSummary"></div>
+      <h4>Traveller details</h4>
+      <div id="travellerForms"></div>
+      <h4>Fare summary</h4>
+      <div id="fareSummary"></div>
+      <div style="margin-top:14px;">
+        <button class="plan-btn" style="margin-top:0;" onclick="confirmBooking()">Confirm booking</button>
+        <button class="back-btn" onclick="backToResults()">Back to flights</button>
+      </div>
+      <div id="bookingDone"></div>
+    </div>
+  </div>
+  <div id="hotelBookingSection" style="display:none;">
+    <div class="book-card">
+      <h3>Review your hotel booking</h3>
+      <div id="bookHotelSummary"></div>
+      <h4>Guest details</h4>
+      <div id="hotelGuestForms"></div>
+      <h4>Stay summary</h4>
+      <div id="hotelFareSummary"></div>
+      <div style="margin-top:14px;">
+        <button class="plan-btn" style="margin-top:0;" onclick="confirmHotelBooking()">Confirm booking</button>
+        <button class="back-btn" onclick="backToHotels()">Back to hotels</button>
+      </div>
+      <div id="hotelBookingDone"></div>
+    </div>
+  </div>
+  <div class="answer-card"><div id="answer"><p>Your plan will appear here.</p></div></div>
+  <div id="followupSection" style="display:none;">
+    <div class="answer-card">
+      <h4 style="margin:0 0 10px;color:#0b2545;">Refine this plan</h4>
+      <div class="chips">
+        <button onclick="sendFollowupText('Make it 5 days instead.')">Make it 5 days</button>
+        <button onclick="sendFollowupText('Show a cheaper option.')">Cheaper option</button>
+        <button onclick="sendFollowupText('Add more shopping to the plan.')">Add shopping</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input id="followupInput" placeholder="Example: make it 5 days, add more food markets..." style="flex:1;font-size:15px;padding:11px;border:1px solid #ccc;border-radius:10px;">
+        <button class="plan-btn" style="margin-top:0;" id="followBtn" onclick="sendFollowup()">Send</button>
+      </div>
+      <div class="small-note">The agent updates the same plan — it does not start over.</div>
+    </div>
+  </div>
+  <div style="margin-top:10px;"><button class="back-btn" style="margin-left:0;" onclick="downloadPlan()">⬇ Download plan</button></div>
+
+  <div class="features">
+    <div class="feat">🤖 <b>AI agent plans it</b><br>It picks the right tools by itself — plan, flight, hotel, budget.</div>
+    <div class="feat">💰 <b>Cheapest first</b><br>Flights and hotels are shown cheapest first, with a total.</div>
+    <div class="feat">📋 <b>Budget checked</b><br>Daily cost × days × people, so you see the full trip cost.</div>
+  </div>
+</div>
+
+<div class="foot">Fares, hotels and budgets shown are example data for demo, not live booking prices.</div>
+
+<script>
+  let currentTripType = "oneway";
+  let currentFlightSort = "price";
+  let lastFlights = [];
+  let displayedFlights = [];
+  let lastHotels = [];
+  let selectedFlight = null;
+  let selectedHotel = null;
+  let lastQuestion = "";
+  let lastAnswerText = "";
+  const SAMPLES = {
+    trip: "Plan a 3-day Tokyo trip for two adults. We like city views, food markets and shopping. Tell me the cheapest flight, cheapest hotel and total budget.",
+    flight: "What is the cheapest flight to Tokyo from New York?",
+    hotel: "What is the cheapest hotel in Tokyo?",
+    budget: "What is the budget for a 3-day Tokyo trip for two people?"
+  };
+  const AIRPORTS = { "Tokyo": "HND", "Kyoto": "KIX", "Kuala Lumpur": "KUL", "Kochi": "COK" };
+  const TYPE_LABELS = { "oneway": "One Way", "round": "Round Trip", "multi": "Multi City" };
+  const LOGO_COLORS = ["#008cff", "#00a651", "#ff6b35", "#7b5cff", "#e91e63"];
+  function datePart() {
+    const dep = document.getElementById("depDate").value;
+    const ret = document.getElementById("retDate").value;
+    let d = "";
+    if (dep) d += ", departing " + dep;
+    if (ret && currentTripType === "round") d += ", returning " + ret;
+    return d;
+  }
+  function buildQuestion() {
+    const from = document.getElementById("fromCity").value;
+    const to = document.getElementById("toCity").value;
+    const days = document.getElementById("days").value || 3;
+    const people = document.getElementById("people").value || 2;
+    const dp = datePart();
+    let q;
+    if (currentTripType === "multi") {
+      const to2 = document.getElementById("toCity2").value;
+      q = "Plan a multi-city trip from " + from + ": first " + to + ", then " + to2 + ", " + days + " days in total" + dp + " for " + people + " people. Tell me the cheapest flight and cheapest hotel for each city and the total budget.";
+    } else if (currentTripType === "round") {
+      q = "Plan a round trip from " + from + " to " + to + " for " + people + " people, " + days + " days" + dp + ". Include the return flight at the same fare, so flight cost counts twice. Tell me the cheapest flight, cheapest hotel and total budget.";
+    } else {
+      q = "Plan a one-way trip from " + from + " to " + to + " for " + people + " people, " + days + " days" + dp + ". Tell me the cheapest flight, cheapest hotel and total budget.";
+    }
+    document.getElementById("question").value = q;
+  }
+  function setTripType(t) {
+    currentTripType = t;
+    document.getElementById("tab-oneway").className = "tab" + (t === "oneway" ? " active" : "");
+    document.getElementById("tab-round").className = "tab" + (t === "round" ? " active" : "");
+    document.getElementById("tab-multi").className = "tab" + (t === "multi" ? " active" : "");
+    document.getElementById("multiRow").style.display = (t === "multi" ? "block" : "none");
+    document.getElementById("retDateWrap").style.display = (t === "round" ? "block" : "none");
+    buildQuestion();
+  }
+  function pickSample(key) {
+    document.getElementById("question").value = SAMPLES[key];
+    document.getElementById("question").focus();
+  }
+  function pickCity(city) {
+    document.getElementById("toCity").value = city;
+    setTripType("oneway");
+    document.getElementById("days").value = 3;
+    document.getElementById("people").value = 2;
+    buildQuestion();
+    document.getElementById("question").scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  function escapeHtml(s) {
+    return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function inlineMd(s) {
+    s = escapeHtml(s);
+    s = s.replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+    s = s.replace(/\*([^*]+)\*/g, "<i>$1</i>");
+    return s;
+  }
+  function renderMarkdown(text) {
+    const lines = text.split("\n");
+    let html = "";
+    let i = 0;
+    while (i < lines.length) {
+      const trimmed = lines[i].trim();
+      if (!trimmed) { i++; continue; }
+      if (trimmed.startsWith("|")) {
+        const rows = [];
+        while (i < lines.length && lines[i].trim().startsWith("|")) {
+          rows.push(lines[i].trim());
+          i++;
+        }
+        const body = rows.filter(function (r) { return !/^\|[\s\-:|]+\|$/.test(r); });
+        if (body.length) {
+          html += "<table>";
+          body.forEach(function (r, idx) {
+            const cells = r.replace(/^\||\|$/g, "").split("|").map(function (s) { return s.trim(); });
+            const tag = idx === 0 ? "th" : "td";
+            html += "<tr>" + cells.map(function (c) { return "<" + tag + ">" + inlineMd(c) + "</" + tag + ">"; }).join("") + "</tr>";
+          });
+          html += "</table>";
+        }
+        continue;
+      }
+      const h = trimmed.match(/^(#{1,4})\s+(.*)$/);
+      if (h) {
+        html += "<h" + h[1].length + ">" + inlineMd(h[2]) + "</h" + h[1].length + ">";
+        i++;
+        continue;
+      }
+      if (/^---+$/.test(trimmed)) { html += "<hr>"; i++; continue; }
+      if (trimmed.startsWith("- ")) {
+        html += "<ul>";
+        while (i < lines.length && lines[i].trim().startsWith("- ")) {
+          html += "<li>" + inlineMd(lines[i].trim().slice(2)) + "</li>";
+          i++;
+        }
+        html += "</ul>";
+        continue;
+      }
+      html += "<p>" + inlineMd(trimmed) + "</p>";
+      i++;
+    }
+    return html || "<p></p>";
+  }
+  function flightPriceNum(f) { return parseFloat(f.price.replace(/[^0-9.]/g, "")) || 0; }
+  function flightMinutes(f) {
+    const m = f.duration.match(/(\d+)\s*h\s*(\d+)\s*m/);
+    if (m) return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+    const h = f.duration.match(/(\d+)\s*h/);
+    return h ? parseInt(h[1], 10) * 60 : 99999;
+  }
+  function flightStopsNum(f) {
+    if (/non/i.test(f.stops)) return 0;
+    const m = f.stops.match(/(\d+)/);
+    return m ? parseInt(m[1], 10) : 99;
+  }
+  function sortedFlights() {
+    const arr = lastFlights.slice();
+    if (currentFlightSort === "duration") arr.sort(function (a, b) { return flightMinutes(a) - flightMinutes(b); });
+    else if (currentFlightSort === "stops") arr.sort(function (a, b) { return flightStopsNum(a) - flightStopsNum(b); });
+    else arr.sort(function (a, b) { return flightPriceNum(a) - flightPriceNum(b); });
+    return arr;
+  }
+  function renderFlightList() {
+    const box = document.getElementById("flightResults");
+    if (!lastFlights.length) { box.innerHTML = ""; return; }
+    displayedFlights = sortedFlights();
+    const fromVal = document.getElementById("fromCity").value;
+    const fromCode = (fromVal.match(/\(([A-Z]{3})\)/) || [null, fromVal])[1];
+    const toCode = AIRPORTS[document.getElementById("toCity").value] || document.getElementById("toCity").value;
+    let routeLabel = fromCode + " → " + toCode;
+    if (currentTripType === "multi") {
+      const to2Code = AIRPORTS[document.getElementById("toCity2").value] || document.getElementById("toCity2").value;
+      routeLabel += " → " + to2Code;
+    }
+    const people = document.getElementById("people").value || 2;
+    const dep = document.getElementById("depDate").value;
+    const ret = document.getElementById("retDate").value;
+    let meta = TYPE_LABELS[currentTripType] + " · " + people + " travellers";
+    if (dep) meta += " · Dep " + dep;
+    if (ret && currentTripType === "round") meta += " · Ret " + ret;
+    let html = '<div class="fc-head">Flights: ' + escapeHtml(routeLabel) + ' <span>· ' + meta + '</span></div>';
+    html += '<div class="fc-note">Sample fares, not live prices.</div>';
+    html += '<div class="sort-btns">'
+      + '<button class="sort-btn' + (currentFlightSort === "price" ? " active" : "") + '" onclick="setFlightSort(\'price\')">Cheapest</button>'
+      + '<button class="sort-btn' + (currentFlightSort === "duration" ? " active" : "") + '" onclick="setFlightSort(\'duration\')">Fastest</button>'
+      + '<button class="sort-btn' + (currentFlightSort === "stops" ? " active" : "") + '" onclick="setFlightSort(\'stops\')">Fewest stops</button>'
+      + '</div>';
+    displayedFlights.forEach(function (f, i) {
+      const color = LOGO_COLORS[i % LOGO_COLORS.length];
+      const letter = escapeHtml(f.airline.charAt(0).toUpperCase());
+      html += '<div class="flight-card">'
+        + '<div class="fc-air"><div class="fc-logo" style="background:' + color + '">' + letter + '</div>'
+        + '<div><b>' + escapeHtml(f.airline) + '</b><br><span>Sample flight</span></div></div>'
+        + '<div class="fc-route"><b>' + escapeHtml(f.route) + '</b><br><span>' + escapeHtml(f.stops) + ' · ' + escapeHtml(f.duration) + '</span></div>'
+        + '<div class="fc-price"><b>' + escapeHtml(f.price) + '</b><br><span>per person</span></div>'
+        + '<div><button class="book-btn" onclick="bookFlight(' + i + ')">Book Now</button></div>'
+        + '</div>';
+    });
+    box.innerHTML = html;
+  }
+  function setFlightSort(s) {
+    currentFlightSort = s;
+    renderFlightList();
+  }
+  function renderFlightCards(text) {
+    const flights = [];
+    const lines = text.split("\n");
+    for (let raw of lines) {
+      if (raw.trim().startsWith("|")) continue;
+      let line = raw.trim().replace(/^[-*]\s+/, "").replace(/^\d+\.\s+/, "").replace(/\*\*/g, "");
+      const parts = line.split("|").map(s => s.trim());
+      if (parts.length >= 5 && /\$[\d,]+/.test(parts[4])) {
+        flights.push({ airline: parts[0], route: parts[1], stops: parts[2], duration: parts[3], price: parts[4] });
+      }
+    }
+    if (!flights.length) { document.getElementById("flightResults").innerHTML = ""; return; }
+    lastFlights = flights;
+    currentFlightSort = "price";
+    renderFlightList();
+  }
+  function renderHotelCards(text) {
+    const box = document.getElementById("hotelResults");
+    box.innerHTML = "";
+    const hotels = [];
+    const lines = text.split("\n");
+    for (let raw of lines) {
+      if (raw.trim().startsWith("|")) continue;
+      let line = raw.trim().replace(/^[-*]\s+/, "").replace(/^\d+\.\s+/, "").replace(/\*\*/g, "");
+      const parts = line.split("|").map(s => s.trim());
+      if (parts.length === 4 && /\$[\d,]+/.test(parts[2])) {
+        hotels.push({ name: parts[0], area: parts[1], price: parts[2], rating: parts[3] });
+      }
+    }
+    if (!hotels.length) return;
+    lastHotels = hotels;
+    let destLabel = document.getElementById("toCity").value;
+    if (currentTripType === "multi") {
+      destLabel += " · " + document.getElementById("toCity2").value;
+    }
+    const days = parseInt(document.getElementById("days").value || 3, 10);
+    let html = '<div class="fc-head">Hotels in ' + escapeHtml(destLabel) + ' <span>· Cheapest first</span></div>';
+    html += '<div class="fc-note">Sample stays, not live availability.</div>';
+    hotels.forEach(function (h, i) {
+      const color = LOGO_COLORS[i % LOGO_COLORS.length];
+      const per = parseFloat(h.price.replace(/[^0-9.]/g, "")) || 0;
+      const stay = per * days;
+      html += '<div class="flight-card">'
+        + '<div class="fc-air"><div class="fc-logo" style="background:' + color + '">🏨</div>'
+        + '<div><b>' + escapeHtml(h.name) + '</b><br><span>' + escapeHtml(h.area) + ' · ⭐ ' + escapeHtml(h.rating) + '</span></div></div>'
+        + '<div class="fc-price"><b>' + escapeHtml(h.price) + '</b><br><span>per night · ' + money(stay) + ' for ' + days + ' nights</span></div>'
+        + '<div><button class="book-btn" onclick="bookHotel(' + i + ')">Book Now</button></div>'
+        + '</div>';
+    });
+    box.innerHTML = html;
+  }
+  function fareNumbers() {
+    const per = parseFloat(selectedFlight.price.replace(/[^0-9.]/g, "")) || 0;
+    const people = parseInt(document.getElementById("people").value || 2, 10);
+    const round = currentTripType === "round";
+    const total = per * people * (round ? 2 : 1);
+    return { per: per, people: people, round: round, total: total };
+  }
+  function money(n) {
+    return "$" + n.toLocaleString("en-US");
+  }
+  function bookFlight(i) {
+    selectedFlight = displayedFlights[i];
+    const f = selectedFlight;
+    document.getElementById("bookFlightSummary").innerHTML =
+      '<div><b>' + escapeHtml(f.airline) + '</b> · ' + escapeHtml(f.route) + '<br><span style="color:#555;">' + escapeHtml(f.stops) + ' · ' + escapeHtml(f.duration) + ' · ' + escapeHtml(f.price) + ' per person</span></div>';
+    const people = parseInt(document.getElementById("people").value || 2, 10);
+    let forms = "";
+    for (let n = 1; n <= people; n++) {
+      forms += '<div class="trav"><b>Traveller ' + n + '</b><br>'
+        + '<select id="ttitle' + n + '"><option>Mr</option><option>Mrs</option><option>Ms</option></select>'
+        + '<input id="tfirst' + n + '" placeholder="First name">'
+        + '<input id="tlast' + n + '" placeholder="Last name"></div>';
+    }
+    document.getElementById("travellerForms").innerHTML = forms;
+    const fare = fareNumbers();
+    let fareHtml = '<div class="fare-row"><span>Fare per person</span><span>' + money(fare.per) + '</span></div>'
+      + '<div class="fare-row"><span>Travellers</span><span>' + fare.people + '</span></div>';
+    if (fare.round) {
+      fareHtml += '<div class="fare-row"><span>Return flight (same fare)</span><span>× 2</span></div>';
+    }
+    fareHtml += '<div class="fare-total"><span>Total amount</span><span>' + money(fare.total) + '</span></div>'
+      + '<div class="small-note">Sample fare, all-in. No payment is taken in this demo.</div>';
+    document.getElementById("fareSummary").innerHTML = fareHtml;
+    document.getElementById("bookingDone").innerHTML = "";
+    document.getElementById("bookingSection").style.display = "block";
+    document.getElementById("bookingSection").scrollIntoView({ behavior: "smooth" });
+  }
+  function backToResults() {
+    document.getElementById("bookingSection").style.display = "none";
+    document.getElementById("flightResults").scrollIntoView({ behavior: "smooth" });
+  }
+  function confirmBooking() {
+    const people = parseInt(document.getElementById("people").value || 2, 10);
+    const names = [];
+    for (let n = 1; n <= people; n++) {
+      const title = document.getElementById("ttitle" + n).value;
+      const first = document.getElementById("tfirst" + n).value.trim();
+      const last = document.getElementById("tlast" + n).value.trim();
+      if (!first || !last) {
+        document.getElementById("bookingDone").innerHTML = '<div class="warn">Please fill first and last name for every traveller.</div>';
+        return;
+      }
+      names.push(title + " " + first + " " + last);
+    }
+    const ref = "TP" + Math.floor(100000 + Math.random() * 900000);
+    const fare = fareNumbers();
+    const f = selectedFlight;
+    let html = '<div class="done-box"><b>Booking confirmed (demo)</b><br>'
+      + 'Demo reference: ' + ref + '<br>'
+      + escapeHtml(f.airline) + ' · ' + escapeHtml(f.route) + ' · ' + escapeHtml(f.stops) + ' · ' + escapeHtml(f.duration) + '<br>'
+      + 'Travellers: ' + names.map(escapeHtml).join(", ") + '<br>'
+      + 'Total: ' + money(fare.total) + ' (demo — not charged)<br>'
+      + '<span style="color:#555;">This is not a real ticket.</span></div>';
+    document.getElementById("bookingDone").innerHTML = html;
+  }
+  function bookHotel(i) {
+    selectedHotel = lastHotels[i];
+    const h = selectedHotel;
+    const days = parseInt(document.getElementById("days").value || 3, 10);
+    const guests = parseInt(document.getElementById("people").value || 2, 10);
+    const per = parseFloat(h.price.replace(/[^0-9.]/g, "")) || 0;
+    const total = per * days;
+    document.getElementById("bookHotelSummary").innerHTML =
+      '<div><b>' + escapeHtml(h.name) + '</b> · ' + escapeHtml(h.area) + '<br><span style="color:#555;">⭐ ' + escapeHtml(h.rating) + ' · ' + escapeHtml(h.price) + ' per night</span></div>';
+    let forms = "";
+    for (let n = 1; n <= guests; n++) {
+      forms += '<div class="trav"><b>Guest ' + n + '</b><br>'
+        + '<select id="htitle' + n + '"><option>Mr</option><option>Mrs</option><option>Ms</option></select>'
+        + '<input id="hfirst' + n + '" placeholder="First name">'
+        + '<input id="hlast' + n + '" placeholder="Last name"></div>';
+    }
+    document.getElementById("hotelGuestForms").innerHTML = forms;
+    let fareHtml = '<div class="fare-row"><span>Price per night</span><span>' + money(per) + '</span></div>'
+      + '<div class="fare-row"><span>Nights</span><span>' + days + '</span></div>'
+      + '<div class="fare-row"><span>Guests</span><span>' + guests + '</span></div>'
+      + '<div class="fare-total"><span>Total stay cost</span><span>' + money(total) + '</span></div>'
+      + '<div class="small-note">Sample stay, all-in. No payment is taken in this demo.</div>';
+    document.getElementById("hotelFareSummary").innerHTML = fareHtml;
+    document.getElementById("hotelBookingDone").innerHTML = "";
+    document.getElementById("hotelBookingSection").style.display = "block";
+    document.getElementById("hotelBookingSection").scrollIntoView({ behavior: "smooth" });
+  }
+  function backToHotels() {
+    document.getElementById("hotelBookingSection").style.display = "none";
+    document.getElementById("hotelResults").scrollIntoView({ behavior: "smooth" });
+  }
+  function confirmHotelBooking() {
+    const guests = parseInt(document.getElementById("people").value || 2, 10);
+    const names = [];
+    for (let n = 1; n <= guests; n++) {
+      const title = document.getElementById("htitle" + n).value;
+      const first = document.getElementById("hfirst" + n).value.trim();
+      const last = document.getElementById("hlast" + n).value.trim();
+      if (!first || !last) {
+        document.getElementById("hotelBookingDone").innerHTML = '<div class="warn">Please fill first and last name for every guest.</div>';
+        return;
+      }
+      names.push(title + " " + first + " " + last);
+    }
+    const ref = "TH" + Math.floor(100000 + Math.random() * 900000);
+    const h = selectedHotel;
+    const days = parseInt(document.getElementById("days").value || 3, 10);
+    const per = parseFloat(h.price.replace(/[^0-9.]/g, "")) || 0;
+    const total = per * days;
+    let html = '<div class="done-box"><b>Hotel booking confirmed (demo)</b><br>'
+      + 'Demo reference: ' + ref + '<br>'
+      + escapeHtml(h.name) + ' · ' + escapeHtml(h.area) + ' · ⭐ ' + escapeHtml(h.rating) + '<br>'
+      + 'Guests: ' + names.map(escapeHtml).join(", ") + ' · ' + days + ' nights<br>'
+      + 'Total: ' + money(total) + ' (demo — not charged)<br>'
+      + '<span style="color:#555;">This is not a real booking.</span></div>';
+    document.getElementById("hotelBookingDone").innerHTML = html;
+  }
+  function downloadPlan() {
+    const text = document.getElementById("answer").textContent || "";
+    const blob = new Blob([text], { type: "text/plain" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "trip-plan.txt";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+  function sendFollowupText(t) {
+    document.getElementById("followupInput").value = t;
+    sendFollowup();
+  }
+  async function sendFollowup() {
+    const input = document.getElementById("followupInput");
+    const f = input.value.trim();
+    if (!f || !lastAnswerText) return;
+    const answer = document.getElementById("answer");
+    const btn = document.getElementById("followBtn");
+    btn.disabled = true;
+    answer.innerHTML = renderMarkdown("Updating your plan...");
+    document.getElementById("flightResults").innerHTML = "";
+    document.getElementById("hotelResults").innerHTML = "";
+    document.getElementById("bookingSection").style.display = "none";
+    document.getElementById("hotelBookingSection").style.display = "none";
+    let sendQ = "Original trip question: " + lastQuestion + "\n\nYour previous answer:\n" + lastAnswerText + "\n\nFollow-up: " + f + "\n\nUpdate the plan according to the follow-up. Keep everything else the same unless the follow-up changes it.";
+    if (/flight|trip/i.test(sendQ)) {
+      sendQ += "\n\nAlso list every flight option on its own line in this exact format: Airline | Route | Stops | Duration | Price. Example: Example Airlines | JFK to HND | 1 stop | 16h 10m | $780";
+    }
+    if (/hotel|trip/i.test(sendQ)) {
+      sendQ += "\n\nAlso list every hotel option on its own line in this exact format: Hotel | Area | Price per night | Rating. Example: Demo Inn Tokyo Station | Tokyo Station | $110 | 4.2 stars";
+    }
+    try {
+      const res = await fetch("http://127.0.0.1:8001/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: sendQ })
+      });
+      const data = await res.json();
+      answer.innerHTML = renderMarkdown(data.answer);
+      renderFlightCards(data.answer);
+      renderHotelCards(data.answer);
+      lastAnswerText = data.answer;
+      input.value = "";
+    } catch (e) {
+      answer.innerHTML = renderMarkdown("Could not reach the planner. Check that Terminal 1 (MCP server) and Terminal 3 (API) are running, then try again.");
+    }
+    btn.disabled = false;
+  }
+  async function askPlanner() {
+    const btn = document.getElementById("planBtn");
+    const answer = document.getElementById("answer");
+    const q = document.getElementById("question").value.trim();
+    if (!q) { answer.innerHTML = renderMarkdown("Please type a trip question first."); return; }
+    btn.disabled = true;
+    btn.textContent = "Planning...";
+    answer.innerHTML = renderMarkdown("Planning your trip...");
+    document.getElementById("flightResults").innerHTML = "";
+    document.getElementById("hotelResults").innerHTML = "";
+    document.getElementById("bookingSection").style.display = "none";
+    document.getElementById("hotelBookingSection").style.display = "none";
+    let sendQ = q;
+    if (/flight|trip/i.test(q)) {
+      sendQ += "\n\nAlso list every flight option on its own line in this exact format: Airline | Route | Stops | Duration | Price. Example: Example Airlines | JFK to HND | 1 stop | 16h 10m | $780";
+    }
+    if (/hotel|trip/i.test(q)) {
+      sendQ += "\n\nAlso list every hotel option on its own line in this exact format: Hotel | Area | Price per night | Rating. Example: Demo Inn Tokyo Station | Tokyo Station | $110 | 4.2 stars";
+    }
+    try {
+      const res = await fetch("http://127.0.0.1:8001/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: sendQ })
+      });
+      const data = await res.json();
+      answer.innerHTML = renderMarkdown(data.answer);
+      renderFlightCards(data.answer);
+      renderHotelCards(data.answer);
+      lastQuestion = q;
+      lastAnswerText = data.answer;
+      document.getElementById("followupInput").value = "";
+      document.getElementById("followupSection").style.display = "block";
+    } catch (e) {
+      answer.innerHTML = renderMarkdown("Could not reach the planner. Check that Terminal 1 (MCP server) and Terminal 3 (API) are running, then try again.");
+    }
+    btn.disabled = false;
+    btn.textContent = "Plan my trip";
+  }
+  document.getElementById("question").addEventListener("keydown", function (e) {
+    if (e.ctrlKey && e.key === "Enter") { askPlanner(); }
+  });
+  document.getElementById("followupInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { sendFollowup(); }
+  });
+  buildQuestion();
+  document.querySelectorAll("select, input[type='number'], input[type='date']").forEach(function (el) {
+    el.addEventListener("focus", buildQuestion);
+  });
+  window.addEventListener("load", function () { setTimeout(buildQuestion, 200); });
+</script>
+</body>
+</html>
